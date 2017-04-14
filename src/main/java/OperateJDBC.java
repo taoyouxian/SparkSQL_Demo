@@ -1,4 +1,5 @@
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.RelationalGroupedDataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
@@ -22,7 +23,7 @@ public class OperateJDBC {
 
     private static void runJdbcDatasetExample(SparkSession spark) {
         //new一个属性
-        System.out.println("确保数据库已经开启，并创建了products表和插入了数据");
+        System.out.println("确保数据库已经开启，并创建了weather表和插入了数据");
         Properties connectionProperties = new Properties();
 
         //增加数据库的用户名(user)密码(password),指定postgresql驱动(driver)
@@ -34,9 +35,11 @@ public class OperateJDBC {
         //SparkJdbc读取Postgresql的products表内容
         System.out.println("SparkJdbc读取Postgresql的weather表内容");
         try {
-            Dataset<Row> jdbcDF = spark.read().jdbc("jdbc:postgresql://10.48.239.94:5432/postgres", "weather", connectionProperties).select("location", "month");
-            //显示jdbcDF数据内容
-            jdbcDF.show();
+            Dataset<Row> jdbcDF = spark.read().jdbc("jdbc:postgresql://localhost:5432/postgres", "weather", connectionProperties);
+            RelationalGroupedDataset rgDataset = jdbcDF.select("location", "month", "temperature").filter("location = 'BRBRGTWN'").orderBy("month").groupBy("location", "month");
+            Dataset<Row> jdbcDF2 = rgDataset.avg("temperature");
+            //显示rgDataset数据内容
+            jdbcDF2.show();
         } catch (Exception e) {
             System.out.print("错误信息: " + e.getMessage());
         }
